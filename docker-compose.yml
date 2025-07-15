@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  kapaladaru:
+    image: morveus/kapaladaru
+    container_name: kapaladaru
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /path/to/your/movies:/movies:ro  # Change this to your movies folder
+      - kapaladaru-checked:/checked
+    environment:
+      - MOVIES_DIR=/movies
+      - CHECKED_DIR=/checked
+      - OLLAMA_ENDPOINT=http://host.docker.internal:11434  # For Ollama running on host
+      - OLLAMA_MODEL=llama3.2
+      - NTFY_URL=https://ntfy.sh/your-topic  # Change to your NTFY topic
+      - CHECK_INTERVAL=3600  # Check every hour
+      - RUN_ONCE=false
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # For Docker Desktop/Linux
+
+volumes:
+  kapaladaru-checked:
