@@ -21,7 +21,8 @@ Kapaladaru periodically scans a specified movie directory, checks each movie fol
 2. Checks if each movie has been previously processed
 3. Queries Ollama AI to identify Indian cinema
 4. Sends notifications for identified movies via NTFY
-5. Records processed movies to avoid re-checking
+5. Deletes from radarr if you're adventurous
+6. Records processed movies to avoid re-checking
 
 ## Installation
 
