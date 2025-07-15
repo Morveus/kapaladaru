@@ -18,6 +18,9 @@ services:
       - NTFY_URL=https://ntfy.sh/your-topic  # Change to your NTFY topic
       - CHECK_INTERVAL=3600  # Check every hour
       - RUN_ONCE=false
+      - DELETE=false  # Set to true to delete Bollywood movies from Radarr
+      - RADARR_URL=http://localhost:7878  # Change to your Radarr URL
+      - RADARR_API_KEY=your-radarr-api-key-here  # Change to your Radarr API key
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"  # For Docker Desktop/Linux

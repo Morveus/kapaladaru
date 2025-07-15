@@ -14,6 +14,9 @@ class MovieChecker:
         self.ollama_endpoint = os.environ.get('OLLAMA_ENDPOINT', 'http://localhost:11434')
         self.ollama_model = os.environ.get('OLLAMA_MODEL', 'llama3.2')
         self.ntfy_url = os.environ.get('NTFY_URL', 'https://ntfy.sh/mytopic')
+        self.delete_enabled = os.environ.get('DELETE', 'false').lower() == 'true'
+        self.radarr_url = os.environ.get('RADARR_URL', 'http://localhost:7878')
+        self.radarr_api_key = os.environ.get('RADARR_API_KEY', '')
         
         print(f"Configuration:")
         print(f"  Movies directory: {self.movies_dir}")
@@ -21,6 +24,9 @@ class MovieChecker:
         print(f"  Ollama endpoint: {self.ollama_endpoint}")
         print(f"  Ollama model: {self.ollama_model}")
         print(f"  NTFY URL: {self.ntfy_url}")
+        print(f"  Delete enabled: {self.delete_enabled}")
+        print(f"  Radarr URL: {self.radarr_url}")
+        print(f"  Radarr API key: {'*' * len(self.radarr_api_key) if self.radarr_api_key else 'Not set'}")
         print()
         
         # Ensure checked directory exists
@@ -179,6 +185,67 @@ Is '{movie_name}' a Bollywood, Indian, or Telugu speaking movie? Answer with jus
         except Exception as e:
             print(f"  Error sending notification: {e}")
     
+    def delete_from_radarr(self, movie_name: str) -> bool:
+        """Delete movie from Radarr if DELETE is enabled"""
+        if not self.delete_enabled:
+            return False
+            
+        if not self.radarr_api_key:
+            print(f"  Radarr API key not set, skipping deletion")
+            return False
+            
+        try:
+            print(f"  Searching for movie in Radarr: '{movie_name}'")
+            
+            # Search for the movie in Radarr
+            search_response = requests.get(
+                f"{self.radarr_url}/api/v3/movie",
+                headers={"X-Api-Key": self.radarr_api_key},
+                params={"term": movie_name},
+                timeout=10
+            )
+            
+            if search_response.status_code != 200:
+                print(f"  Error searching Radarr: {search_response.status_code}")
+                return False
+                
+            movies = search_response.json()
+            
+            # Find matching movie (case-insensitive)
+            matching_movie = None
+            for movie in movies:
+                if movie_name.lower() in movie.get('title', '').lower():
+                    matching_movie = movie
+                    break
+                    
+            if not matching_movie:
+                print(f"  Movie not found in Radarr")
+                return False
+                
+            movie_id = matching_movie.get('id')
+            movie_title = matching_movie.get('title')
+            
+            print(f"  Found movie in Radarr: {movie_title} (ID: {movie_id})")
+            
+            # Delete the movie from Radarr
+            delete_response = requests.delete(
+                f"{self.radarr_url}/api/v3/movie/{movie_id}",
+                headers={"X-Api-Key": self.radarr_api_key},
+                params={"deleteFiles": "true", "addImportExclusion": "false"},
+                timeout=10
+            )
+            
+            if delete_response.status_code in [200, 204]:
+                print(f"  Successfully deleted movie from Radarr: {movie_title}")
+                return True
+            else:
+                print(f"  Error deleting movie from Radarr: {delete_response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"  Error deleting movie from Radarr: {e}")
+            return False
+    
     def process_movies(self):
         """Main processing loop"""
         movies = self.get_movie_folders()
@@ -200,6 +267,14 @@ Is '{movie_name}' a Bollywood, Indian, or Telugu speaking movie? Answer with jus
             if is_indian:
                 print(f"  Identified as Indian movie")
                 self.send_notification(movie)
+                
+                # Try to delete from Radarr if DELETE is enabled
+                if self.delete_enabled:
+                    deleted = self.delete_from_radarr(movie)
+                    if deleted:
+                        print(f"  Movie deleted from Radarr")
+                    else:
+                        print(f"  Failed to delete movie from Radarr")
             else:
                 print(f"  Not an Indian movie")
             
