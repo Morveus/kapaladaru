@@ -1,6 +1,6 @@
 # Kapaladaru
 
-A Python-based tool that monitors a movie directory and identifies Bollywood, Indian, and Telugu films using AI.
+A Python-based tool that monitors a movie directory and identifies Bollywood movies that make their way into Radarr lists.
 
 ## Overview
 
