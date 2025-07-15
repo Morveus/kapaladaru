@@ -27,7 +27,7 @@ Kapaladaru periodically scans a specified movie directory, checks each movie fol
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/kapaladaru.git
+git clone https://github.com/Morveus/kapaladaru.git
 cd kapaladaru
 
 # Build the Docker image
